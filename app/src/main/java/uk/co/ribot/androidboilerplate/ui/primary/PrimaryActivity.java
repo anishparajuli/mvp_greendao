@@ -2,6 +2,8 @@ package uk.co.ribot.androidboilerplate.ui.primary;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -15,18 +17,25 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import uk.co.ribot.androidboilerplate.R;
+import uk.co.ribot.androidboilerplate.data.model.Ribot;
 import uk.co.ribot.androidboilerplate.data.model.User;
 import uk.co.ribot.androidboilerplate.ui.base.BaseActivity;
+import uk.co.ribot.androidboilerplate.ui.main.RibotsAdapter;
 
 public class PrimaryActivity extends BaseActivity implements PrimaryMvpView{
 
     @Inject
     PrimaryPresenter mPrimaryPresenter;
+    @Inject
+    UsersAdapter mUsersAdapter;
 
     @BindView(R.id.input_name)
     EditText mInputName;
     @BindView(R.id.text_results)
     TextView mTextResults;
+
+    @BindView(R.id.recycler_view_users)
+    RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +43,10 @@ public class PrimaryActivity extends BaseActivity implements PrimaryMvpView{
         activityComponent().inject(this);
         setContentView(R.layout.activity_primary);
         ButterKnife.bind(this);
+
+        mRecyclerView.setAdapter(mUsersAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
         mPrimaryPresenter.attachView(this);
 
         refreshList();
@@ -53,24 +66,22 @@ public class PrimaryActivity extends BaseActivity implements PrimaryMvpView{
 
     @Override
     public void showResult(String added) {
+
         refreshList();
         Toast.makeText(this, added+" is added to the database", Toast.LENGTH_SHORT).show();
     }
 
     private void refreshList() {
         List<User> users=mPrimaryPresenter.mDaoservice.read();
-        String results="";
 
         if(users.size()>0){
-            for(User user:users){
-                results+=" "+user.getName()+"\n";
-            }
+            mTextResults.setText(String.valueOf(users.size())+" records found");
+            mUsersAdapter.setUsers(users);
+            mUsersAdapter.notifyDataSetChanged();
         }
         else{
-            results="No record exists";
+            mTextResults.setText("No records found");
         }
-
-        mTextResults.setText(results);
     }
 
     @Override
